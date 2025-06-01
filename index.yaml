@@ -1,0 +1,16 @@
+apiVersion: v1
+entries:
+  tower:
+  - apiVersion: v2
+    appVersion: 1.16.0
+    created: "2025-06-01T23:15:40.100023781Z"
+    description: 'Helm Chart to manage Grafana LGTM+ resources including  Grafana
+      dashboards, Grafana alerts using Grafana Operator and Loki rules, mimir rules
+      via ConfigMaps '
+    digest: 0e2d72fb3548c7a46852f0e76ed132fcc6bb1465d6d14a3a6fdbe94443488f39
+    name: tower
+    type: application
+    urls:
+    - https://github.com/optiop/helm-charts/releases/download/tower-0.0.2/tower-0.0.2.tgz
+    version: 0.0.2
+generated: "2025-06-01T23:15:40.10002872Z"

@@ -1,0 +1,8 @@
+
+grafana:
+  enabled: true
+  labels:
+    instance: mgt-nv-eks
+    datasource-mimir: enabled
+    datasource-loki: enabled
+    datasource-tempo: disabled

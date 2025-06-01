@@ -1,0 +1,56 @@
+{{- if .Values.grafana.enabled -}}
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: mimir
+spec:
+  instanceSelector:
+    matchLabels:
+      datasource-mimir: enabled
+  allowCrossNamespaceImport: true
+  datasource:
+    name: mimir
+    type: prometheus
+    uid: mimir
+    access: proxy
+    url: {{ .Values.datasources.mimir }}
+    isDefault: true
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: loki
+spec:
+  instanceSelector:
+    matchLabels:
+      datasource-loki: enabled
+  allowCrossNamespaceImport: true
+  datasource:
+    name: loki
+    type: loki
+    uid: loki
+    access: proxy
+    url: {{ .Values.datasources.loki }}
+    isDefault: false
+    jsonData:
+      httpHeaderName1: X-Scope-OrgID
+    secureJsonData:
+      httpHeaderValue1: "xurupita"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: tempo
+spec:
+  instanceSelector:
+    matchLabels:
+      datasource-tempo: enabled
+  allowCrossNamespaceImport: true
+  datasource:
+    name: tempo
+    type: tempo
+    uid: tempo
+    access: proxy
+    url: {{ .Values.datasources.tempo }}
+    isDefault: false
+{{- end -}}

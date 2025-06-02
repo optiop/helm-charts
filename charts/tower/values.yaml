@@ -6,3 +6,13 @@ grafana:
     datasource-mimir: enabled
     datasource-loki: enabled
     datasource-tempo: disabled
+
+  datasources:
+    mimir:
+      url: mimir.metrics.svc.cluster.local/prometheus
+    
+    loki:
+      url: loki.logging.svc.cluster.local
+    
+    tempo:
+      url: tempo.tracing.svc.cluster.local

@@ -13,7 +13,7 @@ spec:
     type: prometheus
     uid: mimir
     access: proxy
-    url: {{ .Values.datasources.mimir }}
+    url: {{ .Values.grafana.datasources.mimir.url }}
     isDefault: true
 ---
 apiVersion: grafana.integreatly.org/v1beta1
@@ -30,7 +30,7 @@ spec:
     type: loki
     uid: loki
     access: proxy
-    url: {{ .Values.datasources.loki }}
+    url: {{ .Values.grafana.datasources.loki.url }}
     isDefault: false
     jsonData:
       httpHeaderName1: X-Scope-OrgID
@@ -51,6 +51,6 @@ spec:
     type: tempo
     uid: tempo
     access: proxy
-    url: {{ .Values.datasources.tempo }}
+    url: {{ .Values.grafana.datasources.tempo.url }}
     isDefault: false
 {{- end -}}

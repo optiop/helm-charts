@@ -2,7 +2,7 @@
 grafana:
   enabled: true
   labels:
-    instance: mgt-nv-eks
+    instance: prod
     datasource-mimir: enabled
     datasource-loki: enabled
     datasource-tempo: disabled

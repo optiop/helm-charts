@@ -1,4 +1,4 @@
-{{- if .Values.grafana.enabled -}}
+{{- if and .Values.grafana.enabled .Values.grafana.datasources.mimir.enabled -}}
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDatasource
 metadata:
@@ -16,6 +16,8 @@ spec:
     url: {{ .Values.grafana.datasources.mimir.url }}
     isDefault: true
 ---
+{{- end -}}
+{{- if and .Values.grafana.enabled .Values.grafana.datasources.loki.enabled -}}
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDatasource
 metadata:
@@ -37,6 +39,8 @@ spec:
     secureJsonData:
       httpHeaderValue1: "xurupita"
 ---
+{{- end -}}
+{{- if and .Values.grafana.enabled .Values.grafana.datasources.loki.enabled -}}
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDatasource
 metadata:

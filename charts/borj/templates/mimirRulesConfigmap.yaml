@@ -1,0 +1,125 @@
+{{- $root := . -}}
+{{- if .Values.mimirRules.enabled -}}
+
+{{- if not .Values.mimirRules.ruleFiles }}
+{{- fail "mimirRules.ruleFiles is required" }}
+{{- end }}
+
+{{- range $alert := .Values.mimirRules.ruleFiles }}
+  {{- $files := $.Files.Glob $alert.glob }}
+  {{- range $path, $file := $files }}
+    {{- $configMapName := printf "%s%s.yaml" $.Values.namePrefix (base $path | replace ".yaml" "" | replace ".yml" "" | replace " " "-") }}
+    {{- $content := fromYaml ($file | toString) }}
+    {{- if not $content }}
+      {{- fail (printf "Invalid YAML file: %s" $path) }}
+    {{- end }}
+    {{- if $content.groups }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mimir-rule-{{ base $path | replace ".yaml" "" | replace ".yml" "" | lower | replace " " "-" | replace "/" "-" }}
+  namespace: {{ $alert.namespace | default "mimir" }}
+  labels:
+    mimir-rule: "true"
+data:
+  {{- range $groupIdx, $group := $content.groups -}}
+
+    {{- if not $group.name -}}
+      {{- fail (printf "Each group in %s must have a name" $path) -}}
+    {{- end -}}
+
+    {{/*
+        Set default labels and annotations if not already set in the rule
+      */}}
+    {{- range $ruleIdx, $rule := $group.rules -}}
+      {{- if not $rule.labels }}
+        {{- $_ := set $rule "labels" dict -}}
+      {{- end -}}
+      {{- range $k, $v := $.Values.labels -}}
+        {{- $_ := set $rule.labels $k $v -}}
+      {{- end -}}
+
+      {{- if hasKey $rule "alert" }}
+        {{- if not $rule.annotations }}
+          {{- $_ := set $rule "annotations" dict }}
+        {{- end }}
+        {{- $_ := set $rule.annotations "alert_chart" $.Chart.Name }}
+        {{- $_ := set $rule.annotations "alert_chart_version" $.Chart.Version }}
+        {{- $_ := set $rule.annotations "grafana_alert_url" 
+            (printf "%s/alerting/list?search=namespace:%s%%20datasource:%s%%20%s" 
+              $.Values.mimirRules.grafana.domain 
+              $configMapName
+              $.Values.mimirRules.grafana.datasource
+              $rule.alert 
+            ) 
+        }}
+        {{- $_ := set $rule.annotations "grafana_explore_url"
+
+            (printf "%s%s%s%s%s%s%s%s%s"
+              $.Values.mimirRules.grafana.domain
+              "/explore?schemaVersion=1&panes=%7B%22dny%22:%7B%22datasource%22:%22"
+              $.Values.mimirRules.grafana.datasourceUid
+              "%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22expr%22:%22"
+              (urlquery ($rule.expr | toString | replace "\"" "'" | replace "\n" "\\n") )
+              "%22"
+              ",%22range%22:true,%22instant%22:true,%22datasource%22:%7B%22type%22:%22prometheus%22,%22uid%22:%22"
+              $.Values.mimirRules.grafana.datasourceUid
+              "%22%7D,%22editorMode%22:%22code%22,%22legendFormat%22:%22__auto%22%7D%5D,%22range%22:%7B%22from%22:%22now-1h%22,%22to%22:%22now%22%7D%7D%7D&orgId=1"
+            )
+        }}
+
+        {{/*
+            Add auxiliary information if provided in values.yaml
+          */}}
+
+        {{- $_ := set $rule.annotations "info" "" -}}
+        {{- if $aux := $rule.auxiliary }}
+          {{- if $aux.required_labels }}
+            {{- range $l := $aux.required_labels -}}
+              {{- $_ := set $rule.annotations "info" (printf "%s%s: *{{`{{ $labels.%s }}`}}*\\n" (index $rule.annotations "info" | default "") $l $l) -}}
+            {{- end -}}
+          {{- end -}}
+
+          {{- if $dashboards := $aux.dashboards -}}
+            {{- range $idx, $dashboard := $dashboards -}}
+              {{- $url := printf "%s/d/%s" $.Values.mimirRules.grafana.domain $dashboard -}}
+              {{- $_ := set $rule.annotations "info" (printf "%s%s\\n" (index $rule.annotations "info" | default "") $url ) -}}
+            {{- end -}}
+          {{- end -}}
+          {{- $_ := unset $rule "auxiliary" }}
+        {{- end -}}
+
+
+        {{- range $k, $v := $.Values.annotations }}
+          {{- $_ := set $rule.annotations $k $v }}
+        {{- end -}}
+      {{- end -}}
+
+      {{/*
+          TODO: This part should check that each alert has a title annotation
+        */}}
+      {{- if and (hasKey $rule "alert") $rule.alert -}}
+        {{- if not (hasKey $rule.annotations "title") -}}
+          {{- $_ := set $rule.annotations "title" (printf "[{{ ` {{ $labels.cluster }} ` }}/{{ ` {{ $labels.namespace }} ` }}] %s" $rule.alert) }}
+        {{- end -}}
+      {{- end -}}
+
+      {{/*
+          DEVSECOPS-2106: Ensure Alertnames do not have spaces
+        */}}
+      {{- if and (hasKey $rule "alert") (regexFind " " $rule.alert) }}
+        {{- fail (printf "Alert name '%s' in group '%s' in file '%s' contains spaces. Please replace spaces with camel case." $rule.alert $group.name $path) }}
+      {{- end }}
+
+    {{- end }}
+
+  {{- end }}
+  {{ printf $configMapName }}: |-
+
+{{- tpl (toYaml $content) $root | nindent 4 }}
+    {{- end }}
+  {{- end }}
+{{- end -}}
+
+{{- end }}

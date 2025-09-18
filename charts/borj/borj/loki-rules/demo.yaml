@@ -1,0 +1,14 @@
+groups:
+  - name: Application
+    rules:
+
+      - alert: InfraPodsHighErrorRate
+        expr: |
+          sum by (cluster, namespace) (
+            count_over_time({pod=~".+"} |= "error" [5m])
+          ) > 300
+        for: 0
+        labels:
+          team: DevSecOps
+        annotations:
+          summary: "Pods with more than 300 errors log entries in timespan of 5 minutes"

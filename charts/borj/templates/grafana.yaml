@@ -6,6 +6,9 @@ metadata:
   labels:
     {{- $.Values.grafana.labels | toYaml | nindent 4 }}
 spec:
+  deployment:
+    spec:
+      replicas: 1
   config:
     log:
       mode: "console"

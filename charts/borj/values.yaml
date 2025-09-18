@@ -1,0 +1,58 @@
+
+grafana:
+  enabled: true
+  labels:
+    instance: global
+    datasource-mimir: enabled
+    datasource-loki: enabled
+    datasource-tempo: enabled
+
+  datasources:
+    mimir:
+      enabled: true
+      url: mimir.metrics.svc.cluster.local/prometheus
+   
+    loki:
+      enabled: true
+      url: loki.logging.svc.cluster.local
+
+    tempo:
+      enabled: true
+      url: tempo.tracing.svc.cluster.local
+
+instanceSelector:
+  matchLabels:
+    instance: global
+
+namePrefix: rcc-
+labels:
+  tenant: optiop
+
+annotations:
+  alert_owner: "Mehrshad Lotfi"
+
+lokiRules:
+  enabled: false
+  ruleFiles:
+    - glob: "global/loki-rules/*.yaml"
+      namespace: monitoring
+
+mimirRules:
+  enabled: true
+  ruleFiles:
+    - glob: "cf-global/mimir-rules/*.yaml"
+      namespace: mimir
+    - glob: "cf-global/mimir-rules/*.yml"
+      namespace: mimir
+  grafana: 
+    domain: https://grafana.optiop.net
+    datasource: Mimir
+    datasourceUid: beta0722n9r0gc
+
+# Grafana dashboards
+dashboardFolder:
+  name: global
+  title: Global
+
+dashboards:
+  - glob: "global/grafana-dashboards/*.json"

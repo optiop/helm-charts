@@ -1,0 +1,12 @@
+{{- if and .Values.grafana.enabled .Values.dashboardFolder }}
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaFolder
+metadata:
+  name: {{ $.Values.dashboardFolder.name }}
+spec:
+  title: {{ $.Values.dashboardFolder.title }}
+  instanceSelector:
+    {{- $.Values.instanceSelector | toYaml | nindent 4 }}
+  resyncPeriod: 60s
+{{- end }}

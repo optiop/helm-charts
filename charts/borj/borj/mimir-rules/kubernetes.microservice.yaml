@@ -1,0 +1,127 @@
+groups:
+
+  - name: KubernetesMicroservice
+    rules:
+
+      - alert: KubernetesDeploymentReplicasMismatch
+        expr: |
+          (
+            kube_deployment_spec_replicas > kube_deployment_status_replicas_available
+          ) 
+          and 
+          (
+            changes(kube_deployment_status_replicas_updated[10m]) == 0
+          ) 
+        for: 60m
+        labels:
+          send_to: devops
+          severity: warning
+        annotations:
+          description: "Deployment {{ ` {{ $labels.namespace }} ` }}/{{ ` {{ $labels.deployment }} ` }} has not matched the expected number of replicas for longer than 15 minutes."
+          title: "[{{ ` {{ $labels.cluster }} ` }}/{{ ` {{ $labels.namespace }} ` }}] Deployment [{{ ` {{ $labels.deployment }} ` }}] has not matched the expected number of replicas."
+        auxiliary:
+          required_labels:
+            - cluster
+            - namespace
+            - deployment
+
+      - alert: KubernetesStatefulSetReplicasMismatch
+        expr:  |
+          (
+            kube_statefulset_status_replicas_ready != kube_statefulset_status_replicas) and 
+          (
+            changes(kube_statefulset_status_replicas_updated[10m]) == 0
+          )
+        for: 60m
+        labels:
+          send_to: devops
+          severity: warning
+        annotations:
+          description: "Statefulset {{ ` {{ $labels.namespace }} ` }}/{{ ` {{ $labels.deployment }} ` }} has not matched the expected number of replicas for longer than 15 minutes."
+          title: "[{{ ` {{ $labels.cluster }} ` }}/{{ ` {{ $labels.namespace }} ` }}] Statefulset {{ ` {{ $labels.statefulset }} ` }} has not matched the expected number of replicas."
+        auxiliary:
+          required_labels:
+            - cluster
+            - namespace
+            - statefulset
+
+      #------------------------------- Pod Level Alerts --------------------------------------#
+      - alert: KubernetesPodCrashLooping
+        expr: |
+          increase(kube_pod_container_status_restarts_total[1m]) > 3
+        for: 15m
+        labels:
+          send_to: devops
+          severity: critical
+        annotations:
+          description: "Pod {{ ` {{ $labels.namespace }} ` }}/{{ ` {{ $labels.pod }} ` }} ({{ ` {{ $labels.container }} ` }}) is in waiting state (reason: CrashLoopBackOff)."
+          title: "[{{ ` {{ $labels.cluster }} ` }}/{{ ` {{ $labels.namespace }} ` }}] Pod {{ ` {{ $labels.pod }} ` }} is crash looping"
+        auxiliary:
+          dashboards:
+            - kubernetes-essentials-pods
+          required_labels:
+            - cluster
+            - namespace
+            - pod
+
+      - alert: KubernetesPodNotHealthy
+        expr: |
+          sum by (cluster, namespace, pod) (
+            kube_pod_status_phase{phase=~"Pending|Unknown|Failed"}
+          ) > 0
+        for: 30m
+        labels:
+          send_to: devops
+          severity: critical
+        annotations:
+          description: "Pod {{ ` {{ $labels.pod }}` }} on {{ ` {{ $labels.namespace }} ` }} seen in a non-ready state for longer than 30 minutes"
+          title: "[{{ ` {{ $labels.cluster }} ` }}/{{ ` {{ $labels.namespace }} ` }}] Pod {{ ` {{ $labels.pod }} ` }} found in a has been in a non-running state for longer than 30 minutes"
+        auxiliary:
+          dashboards:
+            - kubernetes-essentials-pods
+          required_labels:
+            - cluster
+            - namespace
+            - pod
+
+      - alert: KubernetesPodWaiting
+        expr: |
+          sum by (cluster, namespace, pod) (
+            kube_pod_container_status_waiting
+          ) > 0
+        for: 1h
+        labels:
+          send_to: devops
+          severity: warning
+        annotations:
+          description: "One or more Pods {{ ` {{ $labels.pod }} ` }} in Namespace {{ ` {{ $labels.namespace }} ` }} on federated instance {{ ` {{ $labels.instance }} ` }} found in Waiting state"
+          title: "[{{ ` {{ $labels.cluster }} ` }}/{{ ` {{ $labels.namespace }} ` }}] Kube Pods in Waiting state"
+        auxiliary:
+          dashboards:
+            - kubernetes-essentials-pods
+          required_labels:
+            - cluster
+            - namespace
+            - pod
+ 
+      - alert: KubernetesPodRestarting
+        expr:  |
+          sum by (cluster, namespace, pod) (
+            increase(
+              kube_pod_container_status_restarts_total[20m]
+            )
+          ) > 3
+        for: 5m 
+        labels:
+          send_to: devops
+          severity: warning
+        annotations:
+          description: "One or more Pods {{ ` {{ $labels.pod }} ` }} in Namespace {{ ` {{ $labels.namespace }} ` }} on federated instance {{ ` {{ $labels.instance }} ` }} found in Restart loop"
+          title: "[{{ ` {{ $labels.cluster }} ` }}/{{ ` {{ $labels.namespace }} ` }}] Kubernetes Pods restart more than 3 times in 20 minutes"
+        auxiliary:
+          dashboards:
+            - kubernetes-essentials-pods
+          required_labels:
+            - cluster
+            - namespace
+            - pod

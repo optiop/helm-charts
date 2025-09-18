@@ -1,0 +1,22 @@
+{{- $root := . -}}
+{{- range .Values.dashboards -}}
+{{- range $path, $bytes := ($root.Files.Glob .glob) -}}
+{{- $dashboardjson := ($root.Files.Get $path) }}
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind:  GrafanaDashboard
+metadata:
+  name: {{ $.Values.namePrefix }}{{ base $path | replace ".json" "" }}
+  labels: 
+    {{- range $key, $value := $.Values.labels }}
+    {{ $key }}: "{{ $value }}"
+    {{- end }}
+spec:
+  folderRef: {{ $.Values.dashboardFolder.name }}
+  resyncPeriod: 30s
+  instanceSelector:
+    {{- $.Values.instanceSelector | toYaml | nindent 4 }}
+  json: >
+{{ $dashboardjson | indent 4 }}
+{{- end }}
+{{- end }}

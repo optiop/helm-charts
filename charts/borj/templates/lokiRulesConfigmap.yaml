@@ -1,0 +1,30 @@
+{{- if .Values.lokiRules.enalbed -}}
+
+{{- if not .Values.lokiRules.ruleFiles }}
+{{- fail "lokiRules.ruleFiles is required" }}
+{{- end }}
+
+{{- range $alert := .Values.lokiRules.ruleFiles }}
+  {{- $files := $.Files.Glob $alert.glob }}
+  {{- range $path, $file := $files }}
+    {{- $content := fromYaml ($file | toString) }}
+    {{- if not $content }}
+      {{- fail (printf "Invalid YAML file: %s" $path) }}
+    {{- end }}
+    {{- if $content.groups }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loki-rule-{{ base $path | replace ".yaml" "" | lower | replace " " "-" | replace "/" "-" }}
+  namespace: {{ $alert.namespace | default "monitoring" }}
+  labels:
+    loki-rule: "true"
+data:
+  {{ base $path | replace ".yaml" "" | replace " " "-" }}.yaml: |-
+{{ $file | toString | indent 4 }}
+    {{- end }}
+  {{- end }}
+{{- end -}}
+
+{{- end }}

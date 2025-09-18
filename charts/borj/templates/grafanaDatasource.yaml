@@ -1,0 +1,72 @@
+{{- if and .Values.grafana.enabled .Values.grafana.datasources.mimir.enabled -}}
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: mimir
+spec:
+  instanceSelector:
+    matchLabels:
+      datasource-mimir: enabled
+  allowCrossNamespaceImport: true
+  datasource:
+    name: mimir
+    type: prometheus
+    uid: mimir
+    access: proxy
+    url: {{ .Values.grafana.datasources.mimir.url }}
+    isDefault: true
+---
+{{- end -}}
+{{- if and .Values.grafana.enabled .Values.grafana.datasources.loki.enabled -}}
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: loki
+spec:
+  instanceSelector:
+    matchLabels:
+      datasource-loki: enabled
+  allowCrossNamespaceImport: true
+  datasource:
+    name: loki
+    type: loki
+    uid: loki
+    access: proxy
+    url: {{ .Values.grafana.datasources.loki.url }}
+    isDefault: false
+    jsonData:
+      httpHeaderName1: X-Scope-OrgID
+    secureJsonData:
+      httpHeaderValue1: "xurupita"
+---
+{{- end -}}
+{{- if and .Values.grafana.enabled .Values.grafana.datasources.loki.enabled -}}
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: tempo
+spec:
+  instanceSelector:
+    matchLabels:
+      datasource-tempo: enabled
+  allowCrossNamespaceImport: true
+  datasource:
+    name: tempo
+    type: tempo
+    uid: tempo
+    access: proxy
+    url: {{ .Values.grafana.datasources.tempo.url }}
+    isDefault: false
+    jsonData:
+      httpMethod: GET
+      tracesToLogs:
+        datasourceUid: loki
+      serviceMap:
+        datasourceUid: mimir
+      search:
+        hide: false
+      nodeGraph:
+        enabled: true
+      lokiSearch:
+        datasourceUid: loki
+{{- end -}}

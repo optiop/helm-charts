@@ -2,6 +2,18 @@ apiVersion: v1
 entries:
   borj:
   - apiVersion: v2
+    appVersion: 0.0.24
+    created: "2025-09-23T08:38:20.794082338Z"
+    description: 'Helm Chart to manage Grafana LGTM+ resources including  Grafana
+      dashboards, Grafana alerts using Grafana Operator and Loki rules, mimir rules
+      via ConfigMaps '
+    digest: 0e936e7bde47d8f0f72edcdb608b79eefeaad4d57df5351df55d99423927eeca
+    name: borj
+    type: application
+    urls:
+    - https://github.com/optiop/helm-charts/releases/download/borj-0.0.24/borj-0.0.24.tgz
+    version: 0.0.24
+  - apiVersion: v2
     appVersion: 0.0.23
     created: "2025-09-18T10:31:01.96708422Z"
     description: 'Helm Chart to manage Grafana LGTM+ resources including  Grafana
@@ -38,4 +50,4 @@ entries:
     urls:
     - https://github.com/optiop/helm-charts/releases/download/tower-0.0.2/tower-0.0.2.tgz
     version: 0.0.2
-generated: "2025-09-18T10:31:01.967091474Z"
+generated: "2025-09-23T08:38:20.794091907Z"
